@@ -15,7 +15,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Header />
-        <Library />
+        {/* <Library /> */}
       </main>
 
       <footer>

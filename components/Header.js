@@ -35,8 +35,16 @@ function Header() {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [overlay, setOverlay] = React.useState(<Overlay />);
+  const [fileList, setFileList] = React.useState([]);
   const finalRef = React.useRef(null);
 
+  const onFileDrop = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const updateFiles = [...fileList, file];
+      console.log(file);
+    }
+  };
   return (
     <>
       <Box
@@ -132,25 +140,64 @@ function Header() {
                   <ModalHeader>Upload File</ModalHeader>
                   <ModalCloseButton />
                   <ModalBody>
-                    <Box p={18}>
-                      <Flex direction={'column'}>
-                        <Image src={file} alt="img" />
-                        <Button
-                          mt={12}
-                          color={'White'}
-                          bgColor="#805df2"
-                          boxShadow="base"
-                          _hover={{
-                            background: '#805df2',
-                            color: 'white',
-                          }}
-                          p="6"
-                          rounded="lg"
-                          border={1}
+                    <Box>
+                      <label htmlFor="upload">
+                        <Flex
+                          direction={'column'}
+                          alignItems={'center'}
+                          border={3}
+                          boxShadow="xs"
+                          py={6}
                         >
-                          Upload Book
-                        </Button>
-                      </Flex>
+                          <label htmlFor="upload">
+                            <Image
+                              src={file}
+                              alt="img"
+                              cursor={'pointer'}
+                              mt={6}
+                            />
+                          </label>
+                          <label htmlFor="upload">
+                            <Box
+                              cursor={'pointer'}
+                              mt={12}
+                              width="160px"
+                              height="50px"
+                              alignContent={'center'}
+                              textAlign={'center'}
+                              color={'White'}
+                              fontWeight={600}
+                              bgColor="#805df2"
+                              boxShadow="base"
+                              _hover={{
+                                background: '#805df2',
+                                color: 'white',
+                              }}
+                              p="3"
+                              rounded="lg"
+                              border={1}
+                            >
+                              Upload Book
+                            </Box>
+                            <Text
+                              mt={3}
+                              fontSize={'16px'}
+                              fontWeight={400}
+                              textAlign={'center'}
+                            >
+                              Drag and Drop a file
+                            </Text>
+                          </label>
+                          <input
+                            type={'file'}
+                            style={{
+                              opacity: 0,
+                            }}
+                            id="upload"
+                            onChange={onFileDrop}
+                          />
+                        </Flex>
+                      </label>
                     </Box>
                   </ModalBody>
                   <ModalFooter>
