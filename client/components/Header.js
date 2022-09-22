@@ -22,6 +22,13 @@ import hero from '../assets/backMan.png';
 import file from '../assets/file.svg';
 import Image from 'next/image';
 import NextLink from 'next/link';
+import { RiCloseCircleLine } from 'react-icons/ri';
+import {
+  useMoralisFile,
+  useMoralis,
+  useWeb3ExecuteFunction,
+} from 'react-moralis';
+import Navbar from './Navbar';
 
 function Header() {
   const Overlay = () => (
@@ -33,18 +40,85 @@ function Header() {
     />
   );
 
+  const { saveFile } = useMoralisFile();
+  const { Moralis, account } = useMoralis();
+  const contractProcessor = useWeb3ExecuteFunction();
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [overlay, setOverlay] = React.useState(<Overlay />);
-  const [fileList, setFileList] = React.useState([]);
+  const [fileList, setFileList] = React.useState();
   const finalRef = React.useRef(null);
 
   const onFileDrop = (event) => {
     const file = event.target.files[0];
     if (file) {
-      const updateFiles = [...fileList, file];
-      console.log(file);
+      const updateFiles = setFileList(fileList ? [...fileList, file] : [file]);
     }
   };
+  const remove = (index) => {
+    console.log(fileList.length + 'length of the file list');
+    fileList.length >= 1
+      ? setFileList(
+          fileList.filter(function (e, i) {
+            return i != index;
+          })
+        )
+      : setFileList(null);
+  };
+
+  const mint = async (account, uri) => {
+    let options = {
+      contractAddress: '0x9d8643e9caA203555cDF7821cAEd52834790148b',
+      functionName: 'safeMint',
+      abi: [
+        {
+          inputs: [
+            {
+              internalType: 'address',
+              name: 'to',
+              type: 'address',
+            },
+            {
+              internalType: 'string',
+              name: 'uri',
+              type: 'string',
+            },
+          ],
+          name: 'safeMint',
+          outputs: [],
+          stateMutability: 'payable',
+          type: 'function',
+        },
+      ],
+      params: {
+        to: account,
+        uri: uri,
+      },
+      msgValue: Moralis.Units.ETH(0.001),
+    };
+
+    await contractProcessor.fetch({
+      params: options,
+      onSuccess: () => {
+        alert('Succesful Mint');
+        setFileList([]);
+      },
+      onError: (error) => {
+        // alert(error.message);
+        console.log(error);
+      },
+    });
+  };
+
+  const uploadNft = async (url) => {
+    fileList.map(async (files, i) => {
+      const file = new Moralis.File(files.name, files);
+      await file.saveIPFS();
+      console.log(file.ipfs(), file.hash());
+      await mint(account, file.ipfs());
+    });
+  };
+
   return (
     <>
       <Box
@@ -63,6 +137,7 @@ function Header() {
           marginTop: '-75px',
           marginBottom: '32px',
           paddingTop: '150px',
+          zIndex: -1,
         }}
       >
         <Flex
@@ -99,8 +174,8 @@ function Header() {
               }}
               marginBottom={{ base: '48px', md: '48px', lg: '48px' }}
             >
-              Discover how user can Mint NFT to over Blockchain in seconds.
-              Reading makes understanding easy and learning never ends
+              Discover how user can Mint NFT over Blockchain in seconds. Reading
+              makes understanding easy and learning never ends
             </Text>
             <Flex
               flex-wrap="wrap"
@@ -143,6 +218,7 @@ function Header() {
                     <Box>
                       <label htmlFor="upload">
                         <Flex
+                          cursor={'pointer'}
                           direction={'column'}
                           alignItems={'center'}
                           border={3}
@@ -160,7 +236,7 @@ function Header() {
                           <label htmlFor="upload">
                             <Box
                               cursor={'pointer'}
-                              mt={12}
+                              mt={10}
                               width="160px"
                               height="50px"
                               alignContent={'center'}
@@ -185,7 +261,7 @@ function Header() {
                               fontWeight={400}
                               textAlign={'center'}
                             >
-                              Drag and Drop a file
+                              Ready
                             </Text>
                           </label>
                           <input
@@ -193,23 +269,58 @@ function Header() {
                             style={{
                               opacity: 0,
                             }}
+                            multiple
                             id="upload"
                             onChange={onFileDrop}
                           />
                         </Flex>
                       </label>
                     </Box>
+
+                    {fileList ? (
+                      fileList.map((file, i) => (
+                        <Box mt={4} boxShadow={'xs'} key={i}>
+                          <Flex
+                            p={2}
+                            mt={4}
+                            justifyContent={'space-between'}
+                            flexDirection={'row'}
+                            alignItems={'center'}
+                          >
+                            <Text>{file.name}</Text>
+
+                            <RiCloseCircleLine
+                              color="red"
+                              cursor={'pointer'}
+                              onClick={() => remove(i)}
+                            />
+                          </Flex>
+                        </Box>
+                      ))
+                    ) : (
+                      <Text>No fIle</Text>
+                    )}
                   </ModalBody>
+
                   <ModalFooter>
                     <Button
                       colorScheme="blue"
-                      ml={6}
+                      mr={6}
                       p="6"
                       rounded="md"
                       border={1}
                       onClick={onClose}
                     >
                       Close
+                    </Button>
+                    <Button
+                      colorScheme={'green'}
+                      p="6"
+                      rounded="md"
+                      border={1}
+                      onClick={uploadNft}
+                    >
+                      Confirm
                     </Button>
                   </ModalFooter>
                 </ModalContent>
@@ -245,7 +356,8 @@ function Header() {
             }}
             flex={1.8}
             as={motion.div}
-            whileHover={{ scale: 0.9, rotate: -10 }}
+            whileHover={{ scale: 1.1, rotate: 0 }}
+            zIndex={-100}
           >
             <Image src={hero} alt="hero's png" />
           </Box>
